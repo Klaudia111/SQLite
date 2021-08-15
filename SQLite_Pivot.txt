@@ -1,0 +1,113 @@
+SELECT JanFebMarch.Month, JanFebMarch.Jan, JanFebMarch.Feb, JanFebMarch.March FROM
+(
+SELECT JanFeb.Month, JanFeb.Jan, JanFeb.Feb, ThirdSet.March FROM 
+(
+SELECT FirstSet.Month, FirstSet.Jan, SecondSet.Feb FROM
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Jan' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-01-%')
+GROUP BY strftime('%m', transaction_date)) AS FirstSet
+
+LEFT OUTER JOIN
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Feb' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-02-%')
+GROUP BY strftime('%m', transaction_date)) AS SecondSet
+ON FirstSet.Month = SecondSet.Month
+
+UNION ALL
+
+SELECT SecondSet.Month, FirstSet.Jan, SecondSet.Feb FROM
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Feb' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-02-%')
+GROUP BY strftime('%m', transaction_date)) AS SecondSet
+
+LEFT OUTER JOIN 
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Jan' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-01-%')
+GROUP BY strftime('%m', transaction_date)) AS FirstSet
+ON FirstSet.Month = SecondSet.Month
+WHERE FirstSet.Month IS NULL
+) AS 'JanFeb'
+
+LEFT OUTER JOIN 
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'March' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-03-%')
+GROUP BY strftime('%m', transaction_date)) AS ThirdSet
+ON JanFeb.Month = ThirdSet.Month
+
+UNION ALL
+
+SELECT ThirdSet.Month, JanFeb.Jan, JanFeb.Feb, ThirdSet.March FROM 
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'March' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-03-%')
+GROUP BY strftime('%m', transaction_date)) AS ThirdSet
+
+LEFT OUTER JOIN
+
+(
+SELECT FirstSet.Month, FirstSet.Jan, SecondSet.Feb FROM
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Jan' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-01-%')
+GROUP BY strftime('%m', transaction_date)) AS FirstSet
+
+LEFT OUTER JOIN
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Feb' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-02-%')
+GROUP BY strftime('%m', transaction_date)) AS SecondSet
+ON FirstSet.Month = SecondSet.Month
+
+UNION ALL
+
+SELECT SecondSet.Month, FirstSet.Jan, SecondSet.Feb FROM
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Feb' FROM Tran
+WHERE Refund = '0' AND Status = 'finalized' AND Currency = 'USD' AND user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-02-%')
+GROUP BY strftime('%m', transaction_date)) AS SecondSet
+
+LEFT OUTER JOIN 
+
+(SELECT strftime('%m', transaction_date) AS 'Month', COUNT(*) AS 'Jan' FROM Tran
+WHERE user_id IN
+(SELECT user_id
+FROM User
+WHERE created_at LIKE '2010-01-%')
+GROUP BY strftime('%m', transaction_date)) AS FirstSet
+ON FirstSet.Month = SecondSet.Month
+WHERE FirstSet.Month IS NULL
+) AS 'JanFeb'
+ON JanFeb.Month = ThirdSet.Month
+WHERE JanFeb.Month IS NULL) As JanFebMarch
